@@ -10,7 +10,9 @@ import { PassportModule } from '@nestjs/passport';
 
 @Module({
   imports: [
-    PassportModule,
+    PassportModule.register({
+      session: false, // 🔥 CLAVE
+    }),
     ConfigModule,
     JwtModule.registerAsync({
       inject: [ConfigService],
