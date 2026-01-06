@@ -3,10 +3,23 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TicketModule } from './ticket/ticket.module';
 import { LotteryModule } from './lottery/lottery.module';
+import { ConfigModule } from '@nestjs/config';
+import { AuthModule } from './auth/auth.module';
+import { envValidationSchema } from './config/env.validation';
+import { PrismaService } from 'prisma/prisma.service';
 
 @Module({
-  imports: [TicketModule, LotteryModule],
+  imports: [
+    TicketModule, 
+    LotteryModule,
+    ConfigModule.forRoot({
+      isGlobal: true,
+      validationSchema: envValidationSchema,
+      envFilePath: '.env',
+    }),
+    AuthModule,
+  ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, PrismaService],
 })
 export class AppModule {}

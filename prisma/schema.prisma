@@ -1,12 +1,6 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider        = "prisma-client-js" // or `prisma-client-js`
+  engineType      = "client" // enable Prisma ORM without Rust
 }
 
 datasource db {
@@ -19,11 +13,24 @@ enum LotteryStatus {
   DRAWN
 }
 
+enum AuthProvider {
+  GOOGLE
+}
+
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  tickets   Ticket[]
-  createdAt DateTime @default(now())
+  id          String        @id @default(uuid())
+  email       String?       @unique
+  name        String?
+  avatar      String?
+  provider    AuthProvider
+  providerId  String
+
+  tickets     Ticket[]
+
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@unique([provider, providerId])
 }
 
 model Lottery {
@@ -35,7 +42,7 @@ model Lottery {
 
   tickets          Ticket[]
 
-  winnerTicketId   String?   // ID del ticket ganador (sin relación)
+  winnerTicketId   String?
 
   createdAt        DateTime @default(now())
 }
