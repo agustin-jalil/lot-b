@@ -10,7 +10,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
 
   constructor() {
     // Asegúrate de que DATABASE_URL esté disponible en tu archivo .env
-    const connectionString = process.env.DATABASE_PUBLIC_URL;
+    const connectionString = process.env.DATABASE_URL;
 
     // Crea una instancia del Pool de conexión del driver
     const pool = new pg.Pool({ connectionString });

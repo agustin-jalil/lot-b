@@ -1,10 +1,47 @@
 generator client {
-  provider        = "prisma-client-js" // or `prisma-client-js`
-  engineType      = "client" // enable Prisma ORM without Rust
+  provider = "prisma-client-js"
+  engineType = "client"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+
+model User {
+  id         String       @id @default(uuid())
+  email      String?      @unique
+  createdAt  DateTime     @default(now())
+  avatar     String?
+  name       String?
+  provider   AuthProvider
+  providerId String
+  updatedAt  DateTime     @updatedAt
+  tickets    Ticket[]
+
+  @@unique([provider, providerId])
+}
+
+model Lottery {
+  id             String        @id @default(uuid())
+  name           String
+  status         LotteryStatus @default(OPEN)
+  startsAt       DateTime
+  endsAt         DateTime
+  winnerTicketId String?
+  createdAt      DateTime      @default(now())
+  tickets        Ticket[]
+}
+
+model Ticket {
+  id        String   @id @default(uuid())
+  lotteryId String
+  userId    String
+  createdAt DateTime @default(now())
+  lottery   Lottery  @relation(fields: [lotteryId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([lotteryId, userId])
 }
 
 enum LotteryStatus {
@@ -15,47 +52,4 @@ enum LotteryStatus {
 
 enum AuthProvider {
   GOOGLE
-}
-
-model User {
-  id          String        @id @default(uuid())
-  email       String?       @unique
-  name        String?
-  avatar      String?
-  provider    AuthProvider
-  providerId  String
-
-  tickets     Ticket[]
-
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-
-  @@unique([provider, providerId])
-}
-
-model Lottery {
-  id               String        @id @default(uuid())
-  name             String
-  status           LotteryStatus @default(OPEN)
-  startsAt         DateTime
-  endsAt           DateTime
-
-  tickets          Ticket[]
-
-  winnerTicketId   String?
-
-  createdAt        DateTime @default(now())
-}
-
-model Ticket {
-  id         String   @id @default(uuid())
-  lotteryId  String
-  userId     String
-
-  lottery    Lottery @relation(fields: [lotteryId], references: [id])
-  user       User    @relation(fields: [userId], references: [id])
-
-  createdAt  DateTime @default(now())
-
-  @@index([lotteryId, userId])
 }

@@ -1,7 +1,7 @@
 import * as Joi from 'joi';
 
 export const envValidationSchema = Joi.object({
-  DATABASE_PUBLIC_URL: Joi.string().required(),
+  DATABASE_URL: Joi.string().required(),
 
   JWT_SECRET: Joi.string().required(),
   JWT_EXPIRES: Joi.string().default('1d'),
