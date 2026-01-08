@@ -7,19 +7,27 @@ datasource db {
   provider = "postgresql"
 }
 
-
 model User {
-  id         String       @id @default(uuid())
-  email      String?      @unique
-  createdAt  DateTime     @default(now())
-  avatar     String?
-  name       String?
-  provider   AuthProvider
-  providerId String
-  updatedAt  DateTime     @updatedAt
-  tickets    Ticket[]
+  id               String           @id @default(uuid())
+  email            String?          @unique
+  name             String?
+  avatar           String?
+  provider         AuthProvider
+  providerId       String
+  referralCode     String?           @unique @default(cuid())
+  referredBy       String?
+  btcWalletAddress String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  
+  tickets          Ticket[]
+  referredUsers    User[]           @relation("Referrals")
+  referrer         User?            @relation("Referrals", fields: [referredBy], references: [referralCode])
+  commissions      Commission[]
+  notifications    Notification[]
 
   @@unique([provider, providerId])
+  @@index([referralCode])
 }
 
 model Lottery {
@@ -28,28 +36,104 @@ model Lottery {
   status         LotteryStatus @default(OPEN)
   startsAt       DateTime
   endsAt         DateTime
+  maxDuration    Int           @default(90) // días
+  prizePool      Decimal       @default(0) @db.Decimal(18, 8)
   winnerTicketId String?
+  winnerNumbers  Int[]
+  drawnAt        DateTime?
   createdAt      DateTime      @default(now())
+  
   tickets        Ticket[]
+  winner         Ticket?       @relation("WinnerTicket", fields: [winnerTicketId], references: [id])
+
+  @@index([status, endsAt])
 }
 
 model Ticket {
-  id        String   @id @default(uuid())
-  lotteryId String
-  userId    String
-  createdAt DateTime @default(now())
-  lottery   Lottery  @relation(fields: [lotteryId], references: [id])
-  user      User     @relation(fields: [userId], references: [id])
+  id               String           @id @default(uuid())
+  lotteryId        String
+  userId           String
+  numbers          Int[]            // Array de 10 números (0-99)
+  quantity         Int              @default(1) // 1, 5 o 10
+  pricePerTicket   Decimal          @db.Decimal(10, 2)
+  totalPrice       Decimal          @db.Decimal(10, 2)
+  discount         Decimal          @default(0) @db.Decimal(5, 2)
+  status           TicketStatus     @default(ACTIVE)
+  transactionHash  String?          // Hash de transacción BTC
+  purchasedAt      DateTime         @default(now())
+  
+  lottery          Lottery          @relation(fields: [lotteryId], references: [id])
+  user             User             @relation(fields: [userId], references: [id])
+  wonLotteries     Lottery[]        @relation("WinnerTicket")
+  commissions      Commission[]
 
+  @@unique([lotteryId, numbers]) // Combinación única por lotería
   @@index([lotteryId, userId])
+  @@index([status])
+}
+
+model Commission {
+  id          String   @id @default(uuid())
+  userId      String
+  ticketId    String
+  amount      Decimal  @db.Decimal(10, 8)
+  percentage  Decimal  @default(20) @db.Decimal(5, 2)
+  status      CommissionStatus @default(PENDING)
+  paidAt      DateTime?
+  createdAt   DateTime @default(now())
+  
+  user        User     @relation(fields: [userId], references: [id])
+  ticket      Ticket   @relation(fields: [ticketId], references: [id])
+
+  @@index([userId, status])
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  data      Json?
+  read      Boolean          @default(false)
+  sentAt    DateTime         @default(now())
+  
+  user      User             @relation(fields: [userId], references: [id])
+
+  @@index([userId, read])
+}
+
+enum AuthProvider {
+  GOOGLE
+  TWITTER
+  APPLE
 }
 
 enum LotteryStatus {
   OPEN
   CLOSED
   DRAWN
+  CANCELLED
 }
 
-enum AuthProvider {
-  GOOGLE
+enum TicketStatus {
+  ACTIVE
+  WINNER
+  LOSER
+  REFUNDED
+}
+
+enum CommissionStatus {
+  PENDING
+  PAID
+  CANCELLED
+}
+
+enum NotificationType {
+  PURCHASE_SUCCESS
+  LOTTERY_WINNER
+  COMMISSION_EARNED
+  COMMISSION_PAID
+  LOTTERY_DRAWN
+  REFERRAL_BONUS
 }

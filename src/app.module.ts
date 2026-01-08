@@ -7,9 +7,12 @@ import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
 import { envValidationSchema } from './config/env.validation';
 import { PrismaService } from 'prisma/prisma.service';
+import { CommissionModule } from './commission/commission.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     TicketModule, 
     LotteryModule,
     ConfigModule.forRoot({
@@ -18,6 +21,7 @@ import { PrismaService } from 'prisma/prisma.service';
       envFilePath: '.env',
     }),
     AuthModule,
+    CommissionModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],
